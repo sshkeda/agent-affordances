@@ -1,0 +1,28 @@
+{
+  "name": "agent-affordances",
+  "version": "0.0.0",
+  "private": true,
+  "license": "UNLICENSED",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json --incremental false",
+    "test": "bun run build && node --test test/*.mjs",
+    "lint": "tsc --noEmit",
+    "lint:fix": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
+    "transit": "echo 'transit'"
+  },
+  "dependencies": {
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.7.0"
+  }
+}
