@@ -26,7 +26,7 @@ import {
 } from "../dist/index.js"
 
 const input = z.object({
-  input: z.string().describe("Question or task to send to the council"),
+  input: z.string().describe("Input text for the example tool"),
 })
 const output = z.object({
   ok: z.literal(true),
@@ -36,24 +36,24 @@ const output = z.object({
 function sampleTool() {
   return defineTool({
     kind: "tool",
-    id: "zcouncil.run",
+    id: "example.run",
     version: "0.1.0",
-    title: "Run zcouncil",
-    description: "Ask the default zcouncil profile for perspectives on an input.",
+    title: "Run example",
+    description: "Run an example agent-facing operation.",
     input,
     output,
     permissions: { requires: ["model.invoke"], dataClasses: ["user_text"] },
-    runtime: { network: true, env: ["OPENROUTER_API_KEY"] },
+    runtime: { network: true, env: ["EXAMPLE_API_KEY"] },
     execution: { mode: "sync", sideEffects: "external", idempotent: false },
     projections: {
       mcp: { name: "run" },
-      pi: { name: "zcouncil_run", label: "Run zcouncil" },
-      cli: { name: "run", usage: "zcouncil run <prompt>", group: "api" },
+      pi: { name: "example_run", label: "Run example" },
+      cli: { name: "run", usage: "example run <input>", group: "api" },
       openapi: {
         method: "post",
         path: "/v1/run",
-        operationId: "runCouncil",
-        tags: ["zcouncil"],
+        operationId: "runExample",
+        tags: ["example"],
       },
       sdk: { name: "run" },
     },
@@ -64,7 +64,7 @@ test("defineTool validates stable ids and registry rejects duplicates", () => {
   assert.throws(() => defineTool({ ...sampleTool(), id: "Bad Id" }), /Invalid affordance id/)
   const tool = sampleTool()
   const registry = createAffordanceRegistry([tool])
-  assert.equal(registry.require("zcouncil.run"), tool)
+  assert.equal(registry.require("example.run"), tool)
   assert.throws(() => registry.register(tool), /Duplicate affordance id/)
 })
 
@@ -73,7 +73,7 @@ test("projects one tool definition to MCP, Pi, OpenAPI, and docs", () => {
 
   const mcp = toMcpTool(tool)
   assert.equal(mcp.name, "run")
-  assert.equal(mcp.title, "Run zcouncil")
+  assert.equal(mcp.title, "Run example")
   assert.equal(mcp.inputSchema.type, "object")
   assert.deepEqual(mcp.annotations, {
     destructiveHint: false,
@@ -81,33 +81,33 @@ test("projects one tool definition to MCP, Pi, OpenAPI, and docs", () => {
   })
 
   const pi = toPiToolDefinition(tool)
-  assert.equal(pi.name, "zcouncil_run")
-  assert.equal(pi.label, "Run zcouncil")
+  assert.equal(pi.name, "example_run")
+  assert.equal(pi.label, "Run example")
   assert.equal(pi.parameters.type, "object")
 
   const cli = toCliCommand(tool)
   assert.equal(cli.name, "run")
-  assert.equal(cli.usage, "zcouncil run <prompt>")
+  assert.equal(cli.usage, "example run <input>")
   assert.equal(cli.group, "api")
   assert.equal(cli.inputSchema.type, "object")
 
   const openapi = toOpenApiOperation(tool)
   assert.equal(openapi.path, "/v1/run")
   assert.equal(openapi.method, "post")
-  assert.equal(openapi.operation.operationId, "runCouncil")
-  assert.deepEqual(openapi.operation.tags, ["zcouncil"])
+  assert.equal(openapi.operation.operationId, "runExample")
+  assert.deepEqual(openapi.operation.tags, ["example"])
 
   const markdown = toMarkdown(tool)
-  assert.match(markdown, /# Run zcouncil/)
-  assert.match(markdown, /`zcouncil\.run`/)
-  assert.match(markdown, /OPENROUTER_API_KEY/)
+  assert.match(markdown, /# Run example/)
+  assert.match(markdown, /`example\.run`/)
+  assert.match(markdown, /EXAMPLE_API_KEY/)
 })
 
 test("defines commands and catalogs without adding runtime behavior", () => {
   const tool = sampleTool()
   const command = defineCommand({
     kind: "command",
-    id: "zcouncil.local.doctor",
+    id: "example.local.doctor",
     version: "0.1.0",
     title: "Check setup",
     description: "Check local setup.",
@@ -115,12 +115,12 @@ test("defines commands and catalogs without adding runtime behavior", () => {
     output: z.object({ ok: z.boolean() }),
     execution: { mode: "sync", sideEffects: "read", idempotent: true },
     projections: {
-      cli: { name: "doctor", usage: "zcouncil doctor", group: "local" },
+      cli: { name: "doctor", usage: "example doctor", group: "local" },
     },
   })
   const catalog = defineCatalog({
-    id: "zcouncil",
-    title: "zcouncil",
+    id: "example",
+    title: "example",
     version: "0.1.0",
     affordances: [tool, command],
   })
@@ -128,47 +128,47 @@ test("defines commands and catalogs without adding runtime behavior", () => {
   assert.equal(toCliCommand(command).name, "doctor")
   assert.deepEqual(
     catalogAffordances(catalog).map((affordance) => affordance.id),
-    ["zcouncil.run", "zcouncil.local.doctor"],
+    ["example.run", "example.local.doctor"],
   )
   assert.deepEqual(
     catalogTools(catalog).map((affordance) => affordance.id),
-    ["zcouncil.run"],
+    ["example.run"],
   )
   assert.deepEqual(
     catalogCommands(catalog).map((affordance) => affordance.id),
-    ["zcouncil.local.doctor"],
+    ["example.local.doctor"],
   )
   assert.throws(
     () => defineCommand({ ...command, projections: { cli: {} } }),
     /requires a CLI projection name/,
   )
-  assert.throws(() => defineCatalog({ id: "zcouncil", affordances: [tool, tool] }), /Duplicate/)
+  assert.throws(() => defineCatalog({ id: "example", affordances: [tool, tool] }), /Duplicate/)
 })
 
 test("projects collections without duplicating adapter merge logic", () => {
   const tool = sampleTool()
   assert.equal(toMcpTools([tool])[0].name, "run")
-  assert.equal(toPiToolDefinitions([tool])[0].name, "zcouncil_run")
-  assert.equal(toOpenApiPaths([tool])["/v1/run"].post.operationId, "runCouncil")
+  assert.equal(toPiToolDefinitions([tool])[0].name, "example_run")
+  assert.equal(toOpenApiPaths([tool])["/v1/run"].post.operationId, "runExample")
   assert.equal(toSdkOperations([tool])[0].name, "run")
   assert.equal(toCliCommands([tool])[0].name, "run")
   const doc = toOpenApiDocument([tool], {
-    title: "zcouncil API",
+    title: "example API",
     version: "0.1.0",
   })
   assert.equal(doc.openapi, "3.1.0")
-  assert.equal(doc.paths["/v1/run"].post.operationId, "runCouncil")
+  assert.equal(doc.paths["/v1/run"].post.operationId, "runExample")
   const manifest = toSdkManifest([tool], {
-    name: "zcouncil",
+    name: "example",
     version: "0.1.0",
   })
   assert.equal(manifest.operations[0].path, "/v1/run")
-  assert.match(toMarkdownDocument([tool]), /# Run zcouncil/)
+  assert.match(toMarkdownDocument([tool]), /# Run example/)
 })
 
 test("projects SDK operation metadata for codegen and handwritten clients", () => {
   const operation = toSdkOperation(sampleTool())
-  assert.equal(operation.id, "zcouncil.run")
+  assert.equal(operation.id, "example.run")
   assert.equal(operation.name, "run")
   assert.equal(operation.method, "post")
   assert.equal(operation.path, "/v1/run")
@@ -181,14 +181,14 @@ test("projects SDK operation metadata for codegen and handwritten clients", () =
 test("default projection names are deterministic", () => {
   const tool = defineTool({
     kind: "tool",
-    id: "pi_chatgpt.ask-gpt-pro",
+    id: "acme.report-summary",
     version: "0.1.0",
-    title: "Ask GPT Pro",
-    description: "Ask GPT Pro with supplied evidence.",
+    title: "Summarize Report",
+    description: "Summarize Report with supplied evidence.",
     input: z.object({ prompt: z.string() }),
     output: z.object({ answer: z.string() }),
   })
-  assert.equal(toMcpTool(tool).name, "pi_chatgpt_ask_gpt_pro")
-  assert.equal(toPiToolDefinition(tool).name, "pi_chatgpt_ask_gpt_pro")
-  assert.equal(toOpenApiOperation(tool).path, "/pi/chatgpt/ask/gpt/pro")
+  assert.equal(toMcpTool(tool).name, "acme_report_summary")
+  assert.equal(toPiToolDefinition(tool).name, "acme_report_summary")
+  assert.equal(toOpenApiOperation(tool).path, "/acme/report/summary")
 })

@@ -202,7 +202,7 @@ bun run typecheck
 
 ## Status
 
-Early but usable. The package is already used to generate/project zcouncil API, SDK, CLI, and worker route metadata, and is being dogfooded for `agent-mcp` tool descriptors.
+Early but usable. The package is being dogfooded for `agent-mcp` tool descriptors and other agent-facing capability catalogs.
 
 ## License
 
