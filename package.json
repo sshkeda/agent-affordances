@@ -1,8 +1,7 @@
 {
   "name": "agent-affordances",
   "version": "0.0.0",
-  "private": true,
-  "license": "UNLICENSED",
+  "license": "MIT",
   "type": "module",
   "exports": {
     ".": {
@@ -16,7 +15,8 @@
     "lint": "tsc --noEmit",
     "lint:fix": "tsc --noEmit",
     "typecheck": "tsc --noEmit",
-    "transit": "echo 'transit'"
+    "check": "bun run test && bun run typecheck",
+    "prepack": "bun run build"
   },
   "dependencies": {
     "zod": "^4.3.6"
@@ -24,5 +24,35 @@
   "devDependencies": {
     "@types/node": "^22.10.0",
     "typescript": "^5.7.0"
-  }
+  },
+  "description": "Metadata and projection primitives for agent-callable tools, commands, and capabilities",
+  "author": "sshkeda",
+  "homepage": "https://github.com/sshkeda/agent-affordances#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sshkeda/agent-affordances.git"
+  },
+  "bugs": {
+    "url": "https://github.com/sshkeda/agent-affordances/issues"
+  },
+  "keywords": [
+    "agent",
+    "affordances",
+    "mcp",
+    "model-context-protocol",
+    "tools",
+    "tool-schema",
+    "openapi",
+    "sdk-generation",
+    "cli-metadata",
+    "ai-agents"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ]
 }
